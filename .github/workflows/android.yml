@@ -26,23 +26,44 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    - name: 🔑 Grant gradlew permission
-      run: chmod +x gradlew
+    - name: 🔎 Locate or prepare Gradle
+      run: |
+        set -e
+        echo "Searching for gradlew in repo..."
+        if [ -f "./gradlew" ]; then
+          echo "Found ./gradlew"
+          chmod +x ./gradlew
+          echo "GRADLEW=./gradlew" >> $GITHUB_ENV
+        else
+          gw=$(find . -maxdepth 4 -name gradlew -print -quit || true)
+          if [ -n "$gw" ]; then
+            echo "Found gradlew at $gw"
+            chmod +x "$gw"
+            echo "GRADLEW=$gw" >> $GITHUB_ENV
+          else
+            echo "gradlew not found. Installing Gradle CLI to run builds instead."
+            GRADLE_VERSION=8.6
+            curl -sLo gradle.zip https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip
+            unzip -q gradle.zip -d gradle-dist
+            echo "PATH=$(pwd)/gradle-dist/gradle-${GRADLE_VERSION}/bin:$PATH" >> $GITHUB_ENV
+            echo "GRADLEW=gradle" >> $GITHUB_ENV
+          fi
+        fi
 
     - name: 🧹 Clean Build
-      run: ./gradlew clean
+      run: $GRADLEW clean
 
     - name: 🔍 Lint Check
-      run: ./gradlew lint
+      run: $GRADLEW lint
 
     - name: 🧪 Unit Tests
-      run: ./gradlew test
+      run: $GRADLEW test
 
     - name: 📦 Build Debug APK
-      run: ./gradlew assembleDebug
+      run: $GRADLEW assembleDebug
 
     - name: 📦 Build Release APK
-      run: ./gradlew assembleRelease
+      run: $GRADLEW assembleRelease
 
     - name: 📤 Upload Debug APK
       uses: actions/upload-artifact@v4
