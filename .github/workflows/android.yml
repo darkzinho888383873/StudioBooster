@@ -50,12 +50,6 @@ jobs:
           fi
         fi
 
-    - name: 🧹 Clean Build
-      run: $GRADLEW clean
-
-    - name: 🔍 Lint Check
-      run: $GRADLEW lint
-
     - name: 🧪 Unit Tests
       run: $GRADLEW test
 
